@@ -1,8 +1,5 @@
-ARG  BUILDER_IMAGE=golang:1.16
-ARG  DISTROLESS_IMAGE=gcr.io/distroless/static
-############################
-# STEP 1 build executable binary
-############################
+ARG  BUILDER_IMAGE=golang:1.18
+
 FROM ${BUILDER_IMAGE} as builder
 
 # Ensure ca-certficates are up to date
@@ -20,15 +17,15 @@ RUN go mod verify
 COPY . .
 
 # Build the static binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags='-w -s -extldflags "-static"' -a \
     -o /go/bin/goapp .
 
 # WKHTMLTOPDF binaries
-FROM surnet/alpine-wkhtmltopdf:3.9-0.12.5-full as wkhtmltopdf
+FROM surnet/alpine-wkhtmltopdf:3.16.2-0.12.6-full as wkhtmltopdf
 
 # Base image
-FROM ghcr.io/ironpeakservices/iron-alpine/iron-alpine:3.13.2
+FROM ghcr.io/ironpeakservices/iron-alpine/iron-alpine:3.16.3
 
 # Install dependencies for wkhtmltopdf
 RUN apk add --no-cache \
@@ -44,7 +41,7 @@ RUN apk add --no-cache \
     ttf-droid \
     ttf-freefont \
     ttf-liberation \
-    ttf-ubuntu-font-family \
+    tzdata \
     && apk add --no-cache --virtual .build-deps \
     msttcorefonts-installer \
     \
@@ -59,7 +56,8 @@ RUN apk add --no-cache \
 RUN $APP_DIR/post-install.sh
 
 # Copy wkhtmltopdf files from docker-wkhtmltopdf image
-COPY --from=wkhtmltopdf /bin/wkhtmltopdf /bin/wkhtmltopdf
+COPY --from=wkhtmltopdf /bin/wkhtmltopdf $APP_DIR
+COPY --from=wkhtmltopdf /bin/wkhtmltoimage $APP_DIR
 
 # Copy our static executable
 COPY --from=builder /go/bin/goapp $APP_DIR

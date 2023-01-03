@@ -27,3 +27,12 @@ func main() {
 
 	fmt.Println("Bye!")
 }
+
+// func main() {
+// 	html := "<html><head></head><body><p style='color:red;'>example</p></body></html>"
+// 	c := wkhtmltoimage.ImageOptions{BinaryPath: "wkhtmltoimage", Input: "-", Format: "png", Html: html}
+// 	log.Println("ad")
+// 	_, err := wkhtmltoimage.GenerateImage(&c)
+
+// 	log.Println(err)
+// }

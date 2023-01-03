@@ -58,15 +58,28 @@ func routerProcessHtml(c *gin.Context) {
 
 	defer f.Close()
 
-	data, err := ProcessHtml(c.PostForm("title"), bf)
+	var data []byte
+	var outputType string
+	if c.DefaultPostForm("type", "pdf") == "pdf" && c.DefaultPostForm("single", "0") == "1" {
+		data, err = ProcessPdfSinglePage(c.PostForm("title"), bf)
+		outputType = "application/pdf"
+	} else if c.DefaultPostForm("type", "pdf") == "pdf" {
+		data, err = ProcessPdf(c.PostForm("title"), bf)
+		outputType = "application/pdf"
+	} else {
+		data, err = ProcessImage(bf)
+		outputType = "image/png"
+	}
+
 	if err != nil {
 		log.Println("Can't process request.")
+		log.Println(err.Error())
 		c.JSON(500, gin.H{
 			"message":        "Can't process request",
-			"message_detail": err,
+			"message_detail": err.Error(),
 		})
 		return
 	}
 
-	c.Data(200, "application/pdf", data)
+	c.Data(200, outputType, data)
 }
